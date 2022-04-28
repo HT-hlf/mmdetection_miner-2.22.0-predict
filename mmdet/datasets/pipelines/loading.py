@@ -192,9 +192,10 @@ class LoadImageFromFile_rgb_depth:
             self.file_client = mmcv.FileClient(**self.file_client_args)
 
         if results['img_prefix'] is not None:
-            filename = osp.join(results['img_prefix'],
-                                results['img_info']['filename'])
             filename_depth = osp.join(results['img_prefix_depth'],
+                                      results['img_info']['filename'])
+
+            filename = osp.join(results['img_prefix'],
                                 results['img_info']['filename'])
         else:
             filename = results['img_info']['filename']

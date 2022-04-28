@@ -21,8 +21,8 @@ import numpy as np
 def creat_dir(out_dir):
     if not os.path.isdir(out_dir):
         os.makedirs(out_dir)
-feature_map_symbol=True
-# feature_map_symbol=False
+# feature_map_symbol=True
+feature_map_symbol=False
 class SE(nn.Module):
     def __init__(self, channel, ratio=16):
         super(SE, self).__init__()
