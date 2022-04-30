@@ -8,7 +8,8 @@ import torch
 import torch.distributed as dist
 from mmcv.runner import BaseModule, auto_fp16
 
-from mmdet.core.visualization import imshow_det_bboxes
+
+from mmdet.core.visualization import imshow_det_bboxes,imshow_det_bboxes_ht_rgb,imshow_det_bboxes_ht_depth
 
 
 class BaseDetector(BaseModule, metaclass=ABCMeta):
@@ -444,7 +445,23 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
         if out_file is not None:
             show = False
         # draw bounding boxes
-        img = imshow_det_bboxes_ht_depth(
+        img_depth_bbox = imshow_det_bboxes_ht_depth(
+            img_depth,
+            bboxes,
+            labels,
+            segms,
+            class_names=('miner',),
+            score_thr=score_thr,
+            bbox_color=bbox_color,
+            text_color=text_color,
+            mask_color=mask_color,
+            thickness=thickness,
+            font_size=font_size,
+            win_name=win_name,
+            show=False,
+            wait_time=wait_time,
+            out_file=out_file)
+        img_rgb_bbox = imshow_det_bboxes_ht_rgb(
             img_rgb,
             bboxes,
             labels,
@@ -457,9 +474,14 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
             thickness=thickness,
             font_size=font_size,
             win_name=win_name,
-            show=show,
+            show=False,
             wait_time=wait_time,
             out_file=out_file)
+        img_rgb_depth_bbox=np.hstack((img_rgb_bbox,img_depth_bbox))
+        mmcv.imshow(img_rgb_depth_bbox,'miner_detect',wait_time)
+        # cv2.imshow('miner_detect', img)
+        # cv2.waitKey(wait_time)
+        # cv2.destroyAllWindows()
         # img = imshow_det_bboxes(
         #     img,
         #     bboxes,
@@ -478,7 +500,7 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
         #     out_file=out_file)
 
         if not (show or out_file):
-            return img
+            return None
 
 
     def onnx_export(self, img, img_metas):

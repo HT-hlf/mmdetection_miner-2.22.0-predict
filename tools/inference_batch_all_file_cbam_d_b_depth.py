@@ -32,8 +32,12 @@ if __name__ == '__main__':
     # 根据配置文件和 checkpoint 文件构建模型
     model = init_detector(config_file, checkpoint_file, device='cuda:0')
     # 测试单张图片并展示结果
-    path=r'G:\mmdetection_miner\data\ht_cumt_rgbd\val2014'
-    depth_path = r'G:\mmdetection_miner\data\ht_cumt_rgbd\depth_val'
+    # path=r'G:\mmdetection_miner\data\ht_cumt_rgbd\val2014'
+    # depth_path = r'G:\mmdetection_miner\data\ht_cumt_rgbd\depth_val'
+    # path = r'G:\roadway_collect_dataset\recordData_process\RGBD_r_14\rgb'
+    # depth_path = r'G:\roadway_collect_dataset\recordData_process\RGBD_r_14\depth'
+    path = r'G:\mmdetection_miner\mmdetection_miner-2.22.0-predict\image_test\rgb'
+    depth_path = r'G:\mmdetection_miner\mmdetection_miner-2.22.0-predict\image_test\depth'
     save_path=r'G:\mmdetection_miner\vritual_image_d'
     for filename in os.listdir(path):
         img_rgb=path+'/'+filename
@@ -42,12 +46,12 @@ if __name__ == '__main__':
         save_img = save_path + '/' + filename
         # img = r'..\data\ht_cumt_rgbd\test2014\RGBD_bk_5_237.jpg'  # 或者 img = mmcv.imread(img)，这样图片仅会被读一次
         # result = inference_detector(model, img,img_prefix_miner='../data/ht_cumt_rgbd/train2014/',img_prefix_depth_miner='../data/ht_cumt_rgbd/depth_train/')
-        result = inference_detector(model, filename, img_prefix_miner='../data/ht_cumt_rgbd/val2014/',
-                                    img_prefix_depth_miner='../data/ht_cumt_rgbd/depth_val/')
+        result = inference_detector(model, filename, img_prefix_miner=path,
+                                    img_prefix_depth_miner=depth_path)
 
         # 在一个新的窗口中将结果可视化
         model.show_result_ht(img_rgb,img_depth, result,show=True,win_name='ht',
-                    wait_time=1)
+                    wait_time=0)
         # 或者将可视化结果保存为图片
         # model.show_result(img, result, out_file=save_img)
 
