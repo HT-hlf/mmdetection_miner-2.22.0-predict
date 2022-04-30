@@ -479,7 +479,8 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
             wait_time=wait_time,
             out_file=out_file)
         img_rgb_depth_bbox=np.hstack((img_rgb_bbox,img_depth_bbox))
-        mmcv.imshow(img_rgb_depth_bbox,'miner_detect',wait_time)
+        if show:
+            mmcv.imshow(img_rgb_depth_bbox,'miner_detect',wait_time)
         # cv2.imshow('miner_detect', img)
         # cv2.waitKey(wait_time)
         # cv2.destroyAllWindows()
@@ -502,6 +503,7 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
 
         if not (show or out_file):
             return None
+        return img_rgb_depth_bbox
 
 
     def onnx_export(self, img, img_metas):

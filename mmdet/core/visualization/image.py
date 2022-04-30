@@ -629,7 +629,7 @@ def imshow_det_bboxes_ht_rgb(img,
     if out_file is not None:
         mmcv.imwrite(img, out_file)
 
-    plt.close()
+    plt.close('all')
 
     return img
 
@@ -812,7 +812,7 @@ def imshow_det_bboxes_ht_depth(img,
     if out_file is not None:
         mmcv.imwrite(img, out_file)
 
-    plt.close()
+    plt.close('all')
 
     return img,bboxes_depth
 

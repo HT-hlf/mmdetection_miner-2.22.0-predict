@@ -42,7 +42,7 @@ if __name__ == '__main__':
                                     img_prefix_depth_miner='../data/ht_cumt_rgbd/depth_val/')
 
         # 在一个新的窗口中将结果可视化
-        model.show_result(img, result,show=True,win_name='ht',
+        model.show_result(img, result,show=False,win_name='ht',
                     wait_time=1)
         # 或者将可视化结果保存为图片
         # model.show_result(img, result, out_file=save_img)
