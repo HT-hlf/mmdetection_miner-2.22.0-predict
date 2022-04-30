@@ -18,8 +18,36 @@ __all__ = [
 ]
 
 EPS = 1e-2
+def calcAndDrawHist_max_pixle_value_cutout_person(image, color,h_num=256):
+    hist = cv2.calcHist([image], [0], None, [h_num], [0.0, 255.0])
+    minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(hist)
+    histImg = np.zeros([256,256, 3], np.uint8)
+    hpt = int(0.9 * 256)
 
+    max_gray_scale_value=-1
+    max_gray_scale_value_count = 0
+    for h in range(h_num):
+        if hist[h] >max_gray_scale_value_count and h>5:
+            max_gray_scale_value_count=hist[h]
+            max_gray_scale_value=h
+        intensity = int(hist[h] * hpt / maxVal)
+        cv2.line(histImg, (int(h/h_num*256), 256), (int(h/h_num*256), 256 - intensity), color)
+    return histImg,max_gray_scale_value
+middle_the=20
+def ht_find_depth(img_find_depth,bboxes):
+    bboxes_depth=[]
+    for bbox in bboxes:
+        xmin, ymin, xmax, ymax,_ = bbox
+        xmin, ymin, xmax, ymax = int(xmin), int(ymin), int(xmax), int(ymax)
+        depth_image_data_1_middle = img_find_depth[
+                                    int((ymin + ymax - 2) / 2) - middle_the:int((ymin + ymax - 2) / 2) + middle_the + 1,
+                                    int((xmin + xmax - 2) / 2) - middle_the:int((xmin + xmax - 2) / 2) + middle_the + 1,
+                                    0:3]
 
+        histimg, max_gray_scale_value = calcAndDrawHist_max_pixle_value_cutout_person(depth_image_data_1_middle,
+                                                                                      (0, 0, 255))
+        bboxes_depth.append(max_gray_scale_value*750/255)
+    return bboxes_depth
 def color_val_matplotlib(color):
     """Convert various input in BGR order to normalized RGB matplotlib color
     tuples.
@@ -109,6 +137,8 @@ def draw_bboxes(ax, bboxes, color='g', alpha=0.8, thickness=2):
     return ax
 
 
+
+
 def draw_labels(ax,
                 labels,
                 positions,
@@ -140,6 +170,61 @@ def draw_labels(ax,
             label] if class_names is not None else f'class {label}'
         if scores is not None:
             label_text += f'|{scores[i]:.02f}'
+        text_color = color[i] if isinstance(color, list) else color
+
+        font_size_mask = font_size if scales is None else font_size * scales[i]
+        ax.text(
+            pos[0],
+            pos[1],
+            f'{label_text}',
+            bbox={
+                'facecolor': 'black',
+                'alpha': 0.8,
+                'pad': 0.7,
+                'edgecolor': 'none'
+            },
+            color=text_color,
+            fontsize=font_size_mask,
+            verticalalignment='top',
+            horizontalalignment=horizontal_alignment)
+
+    return ax
+
+
+def draw_labels_ht(ax,
+                labels,
+                positions,
+                bboxes_depth,
+                scores=None,
+                class_names=None,
+                color='w',
+                font_size=8,
+                scales=None,
+                horizontal_alignment='left'):
+    """Draw labels on the axes.
+
+    Args:
+        ax (matplotlib.Axes): The input axes.
+        labels (ndarray): The labels with the shape of (n, ).
+        positions (ndarray): The positions to draw each labels.
+        scores (ndarray): The scores for each labels.
+        class_names (list[str]): The class names.
+        color (list[tuple] | matplotlib.color): The colors for labels.
+        font_size (int): Font size of texts. Default: 8.
+        scales (list[float]): Scales of texts. Default: None.
+        horizontal_alignment (str): The horizontal alignment method of
+            texts. Default: 'left'.
+
+    Returns:
+        matplotlib.Axes: The result axes.
+    """
+    for i, (pos, label) in enumerate(zip(positions, labels)):
+        label_text = class_names[
+            label] if class_names is not None else f'class {label}'
+        if scores is not None:
+            label_text += f'|{scores[i]:.02f}'
+            # bboxes_depth
+            label_text += f'| depth:{bboxes_depth[i]:.02f}cm'
         text_color = color[i] if isinstance(color, list) else color
 
         font_size_mask = font_size if scales is None else font_size * scales[i]
@@ -373,6 +458,7 @@ def imshow_det_bboxes(img,
     return img
 
 def imshow_det_bboxes_ht_rgb(img,
+                      bboxes_depth,
                       bboxes=None,
                       labels=None,
                       segms=None,
@@ -461,13 +547,15 @@ def imshow_det_bboxes_ht_rgb(img,
 
     max_label = int(max(labels) if len(labels) > 0 else 0)
     text_palette = palette_val(get_palette(text_color, max_label + 1))
-    text_colors = [text_palette[label] for label in labels]
+    # text_colors = [text_palette[label] for label in labels]
+    text_colors = [((1., 0, 0) if bbox_depth < 200 else (0, 1., 0)) for bbox_depth in bboxes_depth]
 
     num_bboxes = 0
     if bboxes is not None:
         num_bboxes = bboxes.shape[0]
         bbox_palette = palette_val(get_palette(bbox_color, max_label + 1))
-        colors = [bbox_palette[label] for label in labels[:num_bboxes]]
+        # colors = [bbox_palette[label] for label in labels[:num_bboxes]]
+        colors = [((1., 0, 0) if bbox_depth < 200 else (0, 1., 0)) for bbox_depth in bboxes_depth]
         draw_bboxes(ax, bboxes, colors, alpha=0.8, thickness=thickness)
 
         horizontal_alignment = 'left'
@@ -475,10 +563,11 @@ def imshow_det_bboxes_ht_rgb(img,
         areas = (bboxes[:, 3] - bboxes[:, 1]) * (bboxes[:, 2] - bboxes[:, 0])
         scales = _get_adaptive_scales(areas)
         scores = bboxes[:, 4] if bboxes.shape[1] == 5 else None
-        draw_labels(
+        draw_labels_ht(
             ax,
             labels[:num_bboxes],
             positions,
+            bboxes_depth,
             scores=scores,
             class_names=class_names,
             color=text_colors,
@@ -614,43 +703,53 @@ def imshow_det_bboxes_ht_depth(img,
         if segms is not None:
             segms = segms[inds, ...]
 
+    img_find_depth=img.copy()
+    bboxes_depth=ht_find_depth(img_find_depth,bboxes)
+
+
     img = mmcv.bgr2rgb(img)
     width, height = img.shape[1], img.shape[0]
     img = np.ascontiguousarray(img)
 
-    # fig = plt.figure(win_name, frameon=False)
-    # plt.title(win_name)
-    # canvas = fig.canvas
-    # dpi = fig.get_dpi()
-    # # add a small EPS to avoid precision lost due to matplotlib's truncation
-    # # (https://github.com/matplotlib/matplotlib/issues/15363)
-    # fig.set_size_inches((width + EPS) / dpi, (height + EPS) / dpi)
+    fig = plt.figure(win_name, frameon=False)
+    plt.title(win_name)
+    canvas = fig.canvas
+    dpi = fig.get_dpi()
+    # add a small EPS to avoid precision lost due to matplotlib's truncation
+    # (https://github.com/matplotlib/matplotlib/issues/15363)
+    fig.set_size_inches((width + EPS) / dpi, (height + EPS) / dpi)
 
     # remove white edges by set subplot margin
-    # plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
-    # ax = plt.gca()
-    # ax.axis('off')
+    plt.subplots_adjust(left=0, right=1, bottom=0, top=1)
+    ax = plt.gca()
+    ax.axis('off')
 
     max_label = int(max(labels) if len(labels) > 0 else 0)
     text_palette = palette_val(get_palette(text_color, max_label + 1))
-    text_colors = [text_palette[label] for label in labels]
+    # text_colors = [text_palette[label] for label in labels]
+    text_colors = [((1.,0,0) if bbox_depth<200 else (0,1.,0)) for bbox_depth in bboxes_depth]
 
     num_bboxes = 0
     if bboxes is not None:
         num_bboxes = bboxes.shape[0]
-        bbox_palette = palette_val(get_palette(bbox_color, max_label + 1))
-        colors = [bbox_palette[label] for label in labels[:num_bboxes]]
-        draw_bboxes(img, bboxes, colors, alpha=0.8, thickness=thickness)
+        # bbox_palette = palette_val(get_palette(bbox_color, max_label + 1))
+        # bbox_palette = [(1.,0,0),(0,1.,0)]
+
+        # colors = [bbox_palette[label] for label in labels[:num_bboxes]]
+        # colors =[(1.,0,0),(0,1.,0)]
+        colors =[((1.,0,0) if bbox_depth<200 else (0,1.,0)) for bbox_depth in bboxes_depth]
+        draw_bboxes(ax, bboxes, colors, alpha=0.8, thickness=thickness)
 
         horizontal_alignment = 'left'
         positions = bboxes[:, :2].astype(np.int32) + thickness
         areas = (bboxes[:, 3] - bboxes[:, 1]) * (bboxes[:, 2] - bboxes[:, 0])
         scales = _get_adaptive_scales(areas)
         scores = bboxes[:, 4] if bboxes.shape[1] == 5 else None
-        draw_labels(
-            img,
+        draw_labels_ht(
+            ax,
             labels[:num_bboxes],
             positions,
+            bboxes_depth,
             scores=scores,
             class_names=class_names,
             color=text_colors,
@@ -662,7 +761,7 @@ def imshow_det_bboxes_ht_depth(img,
         mask_palette = get_palette(mask_color, max_label + 1)
         colors = [mask_palette[label] for label in labels]
         colors = np.array(colors, dtype=np.uint8)
-        draw_masks(img, img, segms, colors, with_edge=True)
+        draw_masks(ax, img, segms, colors, with_edge=True)
 
         if num_bboxes < segms.shape[0]:
             segms = segms[num_bboxes:]
@@ -678,9 +777,10 @@ def imshow_det_bboxes_ht_depth(img,
             areas = np.stack(areas, axis=0)
             scales = _get_adaptive_scales(areas)
             draw_labels(
-                img,
+                ax,
                 labels[num_bboxes:],
                 positions,
+                bboxes_depth,
                 class_names=class_names,
                 color=text_colors,
                 font_size=font_size,
@@ -714,7 +814,7 @@ def imshow_det_bboxes_ht_depth(img,
 
     plt.close()
 
-    return img
+    return img,bboxes_depth
 
 
 def imshow_gt_det_bboxes(img,

@@ -445,7 +445,7 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
         if out_file is not None:
             show = False
         # draw bounding boxes
-        img_depth_bbox = imshow_det_bboxes_ht_depth(
+        img_depth_bbox,bboxes_depth = imshow_det_bboxes_ht_depth(
             img_depth,
             bboxes,
             labels,
@@ -463,6 +463,7 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
             out_file=out_file)
         img_rgb_bbox = imshow_det_bboxes_ht_rgb(
             img_rgb,
+            bboxes_depth,
             bboxes,
             labels,
             segms,
