@@ -1,4 +1,3 @@
 # mmdetection_miner-2.22.0-predict
+！[]( https://www.bilibili.com/video/BV1Cg411e7JS?share_source=copy_web&vd_source=9e0d75e1291c4746cf32f2a82d2e0b4a)
 
-
-<iframe src="//player.bilibili.com/player.html?aid=516033525&bvid=BV1Cg411e7JS&cid=846937152&page=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
